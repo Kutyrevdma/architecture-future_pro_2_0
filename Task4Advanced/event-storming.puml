@@ -1,0 +1,68 @@
+@startuml
+
+class RegisterCustomer <<Command>>
+class CustomerRegistered <<DomainEvent>>
+
+class CreatePatient <<Command>>
+class PatientCreated <<DomainEvent>>
+
+class ScheduleAppointment <<Command>>
+class AppointmentScheduled <<DomainEvent>>
+
+class CompleteAppointment <<Command>>
+class AppointmentCompleted <<DomainEvent>>
+
+class RecordDiagnosis <<Command>>
+class DiagnosisRecorded <<DomainEvent>>
+
+class RequestImagingStudy <<Command>>
+class ImagingStudyRequested <<DomainEvent>>
+
+class CompleteImagingStudy <<Command>>
+class ImagingStudyCompleted <<DomainEvent>>
+
+class RequestAIAnalysis <<Command>>
+class AIAnalysisRequested <<DomainEvent>>
+
+class CompleteAIAnalysis <<Command>>
+class AIAnalysisCompleted <<DomainEvent>>
+
+class CreateInvoice <<Command>>
+class InvoiceCreated <<DomainEvent>>
+
+class ProcessPayment <<Command>>
+class PaymentReceived <<DomainEvent>>
+
+
+RegisterCustomer --> CustomerRegistered
+CustomerRegistered --> CreatePatient
+CreatePatient --> PatientCreated
+
+PatientCreated --> ScheduleAppointment
+ScheduleAppointment --> AppointmentScheduled
+
+AppointmentScheduled --> CompleteAppointment
+CompleteAppointment --> AppointmentCompleted
+
+AppointmentCompleted --> RecordDiagnosis
+RecordDiagnosis --> DiagnosisRecorded
+
+DiagnosisRecorded --> RequestImagingStudy
+RequestImagingStudy --> ImagingStudyRequested
+
+ImagingStudyRequested --> CompleteImagingStudy
+CompleteImagingStudy --> ImagingStudyCompleted
+
+ImagingStudyCompleted --> RequestAIAnalysis
+RequestAIAnalysis --> AIAnalysisRequested
+
+AIAnalysisRequested --> CompleteAIAnalysis
+CompleteAIAnalysis --> AIAnalysisCompleted
+
+AppointmentCompleted --> CreateInvoice
+CreateInvoice --> InvoiceCreated
+
+InvoiceCreated --> ProcessPayment
+ProcessPayment --> PaymentReceived
+
+@enduml

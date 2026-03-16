@@ -1,0 +1,49 @@
+@startuml
+
+package "Customer Context" {
+  class Customer
+}
+
+package "Medical Context" {
+  class Patient
+  class Appointment
+  class Diagnosis
+  class ImagingStudy
+}
+
+package "AI Diagnostics Context" {
+  class AIAnalysis
+}
+
+package "Fintech Context" {
+  class Account
+  class Loan
+}
+
+package "Billing Context" {
+  class Invoice
+}
+
+package "Inventory Context" {
+  class InventoryItem
+}
+
+package "Staff Context" {
+  class StaffMember
+}
+
+Customer --> Patient
+Patient --> Appointment
+Appointment --> Diagnosis
+Diagnosis --> ImagingStudy
+ImagingStudy --> AIAnalysis
+
+Appointment --> Invoice
+
+Customer --> Account
+Customer --> Loan
+
+Appointment --> StaffMember
+Appointment --> InventoryItem
+
+@enduml

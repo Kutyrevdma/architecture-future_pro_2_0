@@ -1,0 +1,28 @@
+# Каталог доменных событий
+
+В рамках событийной архитектуры каждое значимое изменение состояния системы публикуется как доменное событие.  
+События используются для интеграции доменов, построения аналитики и реактивной обработки данных.
+
+| Событие | Домен | Назначение | Основные поля |
+|--------|------|-------------|---------------|
+| CustomerRegistered | Customer | Регистрация нового клиента в системе | customerId, name, email, phone |
+| CustomerUpdated | Customer | Обновление данных клиента | customerId, updatedFields |
+| PatientCreated | Medical | Создание пациента на основе клиента | patientId, customerId, insuranceNumber |
+| AppointmentScheduled | Medical | Запланирован приём у врача | appointmentId, patientId, doctorId, scheduledTime |
+| AppointmentCompleted | Medical | Приём завершён | appointmentId, result |
+| DiagnosisRecorded | Medical | Зафиксирован диагноз | diagnosisId, patientId, diagnosisCode |
+| PrescriptionIssued | Medical | Выписано лекарственное назначение | prescriptionId, patientId, medication |
+| ImagingStudyRequested | Medical | Запрошено диагностическое исследование | studyId, patientId, studyType |
+| ImagingStudyCompleted | Medical | Исследование завершено | studyId, resultUri |
+| AIAnalysisRequested | AI Diagnostics | Исследование отправлено на анализ ИИ | analysisId, studyId, model |
+| AIAnalysisCompleted | AI Diagnostics | Получен результат анализа | analysisId, prediction, confidence |
+| InventoryItemUsed | Inventory | Использован медицинский расходный материал | itemId, quantity, appointmentId |
+| InventoryLow | Inventory | Запасы материала ниже допустимого уровня | itemId, currentLevel |
+| StaffAssigned | Staff | Назначен медицинский сотрудник | staffId, appointmentId |
+| AccountOpened | Fintech | Открыт банковский счёт клиента | accountId, customerId |
+| LoanApplicationSubmitted | Fintech | Подана заявка на кредит | loanId, customerId, amount |
+| LoanApproved | Fintech | Кредит одобрен | loanId, approvedAmount |
+| LoanDisbursed | Fintech | Кредит выдан клиенту | loanId, disbursedAmount |
+| TransactionPosted | Fintech | Проведена банковская операция | transactionId, accountId, amount |
+| InvoiceCreated | Billing | Выставлен счёт за медицинские услуги | invoiceId, patientId, amount |
+| PaymentReceived | Billing | Получена оплата | invoiceId, amount, paymentMethod |
