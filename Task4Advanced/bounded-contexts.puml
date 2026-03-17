@@ -1,0 +1,114 @@
+@startuml
+!include <C4/C4_Context>
+
+title Bounded Contexts – Future 2.0 (Event-Driven Architecture)
+
+' ---------------------------
+' Актор
+' ---------------------------
+
+Person(user, "User", "Клиент / сотрудник системы")
+
+' ---------------------------
+' Основные домены
+' ---------------------------
+
+System_Boundary(customer, "Customer Domain") {
+    System(customerSystem, "Customer Service", "Управление клиентами")
+}
+
+System_Boundary(medical, "Medical Domain") {
+    System(medicalSystem, "Medical Service", "Приёмы, пациенты, диагнозы")
+}
+
+System_Boundary(ai, "AI Diagnostics Domain") {
+    System(aiSystem, "AI Service", "Анализ медицинских данных")
+}
+
+System_Boundary(billing, "Billing Domain") {
+    System(billingSystem, "Billing Service", "Счета и оплаты")
+}
+
+System_Boundary(fintech, "Fintech Domain") {
+    System(fintechSystem, "Fintech Service", "Счета, транзакции, кредиты")
+}
+
+System_Boundary(inventory, "Inventory Domain") {
+    System(inventorySystem, "Inventory Service", "Материалы")
+}
+
+System_Boundary(staff, "Staff Domain") {
+    System(staffSystem, "Staff Service", "Персонал")
+}
+
+' ---------------------------
+' Дополнительные контуры (обязательные)
+' ---------------------------
+
+System_Boundary(analytics, "Analytics Context") {
+    System(analyticsSystem, "Analytics Platform", "BI / отчёты / data lake")
+}
+
+System_Boundary(integration, "Integration Context") {
+    System(integrationSystem, "Integration Layer", "Внешние системы / партнёры")
+}
+
+System_Boundary(iam, "IAM Context") {
+    System(iamSystem, "IAM Service", "Управление доступом")
+}
+
+' ---------------------------
+' Event Bus
+' ---------------------------
+
+System(eventBus, "Event Bus (Kafka)", "Передача событий между доменами")
+
+' ---------------------------
+' Взаимодействие пользователя
+' ---------------------------
+
+Rel(user, customerSystem, "Регистрация / профиль")
+Rel(user, medicalSystem, "Запись на приём")
+Rel(user, billingSystem, "Оплата")
+
+' ---------------------------
+' Публикация событий (producers)
+' ---------------------------
+
+Rel(customerSystem, eventBus, "publishes Customer events")
+Rel(medicalSystem, eventBus, "publishes Medical events")
+Rel(aiSystem, eventBus, "publishes AI events")
+Rel(billingSystem, eventBus, "publishes Billing events")
+Rel(fintechSystem, eventBus, "publishes Fintech events")
+Rel(inventorySystem, eventBus, "publishes Inventory events")
+Rel(staffSystem, eventBus, "publishes Staff events")
+
+' ---------------------------
+' Подписчики (consumers)
+' ---------------------------
+
+Rel(eventBus, medicalSystem, "subscribes")
+Rel(eventBus, aiSystem, "subscribes")
+Rel(eventBus, billingSystem, "subscribes")
+Rel(eventBus, fintechSystem, "subscribes")
+Rel(eventBus, inventorySystem, "subscribes")
+Rel(eventBus, staffSystem, "subscribes")
+
+' ---------------------------
+' Обязательные контуры (ключ ревью)
+' ---------------------------
+
+Rel(eventBus, analyticsSystem, "consumes ALL events")
+Rel(eventBus, integrationSystem, "consumes external integration events")
+Rel(eventBus, iamSystem, "consumes identity events")
+
+' ---------------------------
+' Примеры ключевых связей (для читаемости)
+' ---------------------------
+
+Rel(customerSystem, iamSystem, "CustomerRegistered → IAM")
+Rel(medicalSystem, billingSystem, "AppointmentCompleted → InvoiceCreated")
+Rel(billingSystem, fintechSystem, "PaymentReceived → Transaction")
+Rel(medicalSystem, aiSystem, "ImagingStudyCompleted → AIAnalysis")
+
+@enduml

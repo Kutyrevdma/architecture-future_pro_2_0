@@ -1,0 +1,60 @@
+@startuml
+!include <C4/C4_Container>
+
+title Container Diagram – Future Analytics Platform
+
+Person(user, "Пользователь", "Аналитик или сотрудник")
+
+System_Boundary(platform, "Future Analytics Platform") {
+
+    Container(ui_portal, "Self-Service Portal", "React", "Интерфейс для поиска и создания отчётов")
+    Container(api_layer, "API Layer", "Kong / Nginx", "Единая точка доступа к сервисам")
+
+    Container(event_bus, "Event Bus", "Kafka", "Передача событий между доменами")
+
+    Boundary(data_domains, "Бизнес-домены") {
+        Container(domain_apps, "Domain Services", "Java / Go", "Обработка бизнес-событий")
+        ContainerDb(domain_storage, "Domain Storage", "PostgreSQL / MongoDB", "Операционные данные")
+        Container(data_products, "Domain Data Products", "Parquet / APIs", "Подготовленные данные для аналитики")
+    }
+
+    Container(metadata_service, "Metadata Service", "DataHub", "Каталог и описание данных")
+    Container(lake_storage, "Analytical Storage", "S3 + Iceberg", "Хранилище аналитических данных")
+    Container(sql_engine, "Query Engine", "Trino", "SQL-доступ к данным")
+
+    Container(auth_service, "Access Management", "Keycloak", "Аутентификация и авторизация")
+    Container(workflow_engine, "Workflow Scheduler", "Airflow", "Оркестрация пайплайнов")
+
+    Container(visualization, "Analytics Tools", "Superset / Tableau", "Построение дашбордов")
+}
+
+System_Ext(old_dwh, "Legacy Warehouse", "SQL Server")
+System_Ext(integration_bus, "Integration Bus", "Apache Camel")
+
+Rel(user, ui_portal, "Использует", "HTTPS")
+
+Rel(ui_portal, api_layer, "Запросы", "HTTP")
+Rel(api_layer, auth_service, "Проверка доступа", "OIDC")
+
+Rel(api_layer, sql_engine, "Запросы данных", "REST")
+Rel(api_layer, metadata_service, "Поиск датасетов", "REST")
+
+Rel(domain_apps, domain_storage, "Читает/пишет", "SQL")
+Rel(domain_apps, event_bus, "Отправляет события", "Kafka")
+
+Rel(event_bus, data_products, "Обновляет данные", "Streaming")
+
+Rel(data_products, lake_storage, "Сохраняет данные", "S3")
+
+Rel(sql_engine, lake_storage, "Читает таблицы", "Iceberg")
+
+Rel(visualization, sql_engine, "SQL-запросы", "JDBC")
+
+Rel(workflow_engine, sql_engine, "Запуск задач", "SQL/API")
+
+Rel(integration_bus, event_bus, "Публикация событий", "Kafka")
+Rel(integration_bus, old_dwh, "Чтение данных", "JDBC")
+
+Rel(metadata_service, sql_engine, "Метаданные", "REST")
+
+@enduml

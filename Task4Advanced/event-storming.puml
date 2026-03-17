@@ -1,0 +1,134 @@
+@startuml
+!include <C4/C4_Context>
+
+title Event Storming – Future 2.0 (Producer / Consumer Model)
+
+' ---------------------------
+'  Контексты
+' ---------------------------
+
+System_Boundary(customer, "Customer Domain") {
+}
+
+System_Boundary(medical, "Medical Domain") {
+}
+
+System_Boundary(ai, "AI Diagnostics Domain") {
+}
+
+System_Boundary(billing, "Billing Domain") {
+}
+
+System_Boundary(fintech, "Fintech Domain") {
+}
+
+System_Boundary(inventory, "Inventory Domain") {
+}
+
+System_Boundary(staff, "Staff Domain") {
+}
+
+System_Boundary(analytics, "Analytics Context") {
+}
+
+System_Boundary(integration, "Integration Context") {
+}
+
+System_Boundary(iam, "IAM Context") {
+}
+
+' ---------------------------
+' События (Event Flow)
+' ---------------------------
+
+' Customer → downstream
+
+customer --> (CustomerRegistered)
+(CustomerRegistered) --> medical
+(CustomerRegistered) --> iam
+(CustomerRegistered) --> analytics
+
+customer --> (CustomerUpdated)
+(CustomerUpdated) --> medical
+(CustomerUpdated) --> analytics
+
+
+' Medical core flow
+
+medical --> (PatientCreated)
+(PatientCreated) --> analytics
+
+medical --> (AppointmentScheduled)
+(AppointmentScheduled) --> staff
+(AppointmentScheduled) --> analytics
+
+medical --> (AppointmentCompleted)
+(AppointmentCompleted) --> billing
+(AppointmentCompleted) --> ai
+(AppointmentCompleted) --> analytics
+
+medical --> (AppointmentCancelled)
+(AppointmentCancelled) --> analytics
+
+
+' Diagnosis / Imaging / AI
+
+medical --> (DiagnosisRecorded)
+(DiagnosisRecorded) --> ai
+(DiagnosisRecorded) --> analytics
+
+medical --> (ImagingStudyRequested)
+(ImagingStudyRequested) --> ai
+
+medical --> (ImagingStudyCompleted)
+(ImagingStudyCompleted) --> ai
+(ImagingStudyCompleted) --> analytics
+
+ai --> (AIAnalysisCompleted)
+(AIAnalysisCompleted) --> medical
+(AIAnalysisCompleted) --> analytics
+
+
+' Billing / Finance flow
+
+billing --> (InvoiceCreated)
+(InvoiceCreated) --> fintech
+(InvoiceCreated) --> analytics
+
+billing --> (PaymentReceived)
+(PaymentReceived) --> fintech
+(PaymentReceived) --> analytics
+
+fintech --> (TransactionPosted)
+(TransactionPosted) --> billing
+(TransactionPosted) --> analytics
+
+
+' Loans
+
+fintech --> (LoanApplicationSubmitted)
+(LoanApplicationSubmitted) --> analytics
+
+fintech --> (LoanApproved)
+(LoanApproved) --> analytics
+
+fintech --> (LoanDisbursed)
+(LoanDisbursed) --> analytics
+
+
+' Inventory
+
+inventory --> (InventoryItemUsed)
+(InventoryItemUsed) --> analytics
+
+inventory --> (InventoryLow)
+(InventoryLow) --> integration
+(InventoryLow) --> analytics
+
+
+' Staff
+
+staff --> (StaffAssigned)
+(StaffAssigned) --> analytics
+
+@enduml
