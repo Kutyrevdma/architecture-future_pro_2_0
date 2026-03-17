@@ -1,68 +1,134 @@
 @startuml
+!include <C4/C4_Context>
 
-class RegisterCustomer <<Command>>
-class CustomerRegistered <<DomainEvent>>
+title Event Storming – Future 2.0 (Producer / Consumer Model)
 
-class CreatePatient <<Command>>
-class PatientCreated <<DomainEvent>>
+' ---------------------------
+' Контексты
+' ---------------------------
 
-class ScheduleAppointment <<Command>>
-class AppointmentScheduled <<DomainEvent>>
+System_Boundary(customer, "Customer Domain") {
+}
 
-class CompleteAppointment <<Command>>
-class AppointmentCompleted <<DomainEvent>>
+System_Boundary(medical, "Medical Domain") {
+}
 
-class RecordDiagnosis <<Command>>
-class DiagnosisRecorded <<DomainEvent>>
+System_Boundary(ai, "AI Diagnostics Domain") {
+}
 
-class RequestImagingStudy <<Command>>
-class ImagingStudyRequested <<DomainEvent>>
+System_Boundary(billing, "Billing Domain") {
+}
 
-class CompleteImagingStudy <<Command>>
-class ImagingStudyCompleted <<DomainEvent>>
+System_Boundary(fintech, "Fintech Domain") {
+}
 
-class RequestAIAnalysis <<Command>>
-class AIAnalysisRequested <<DomainEvent>>
+System_Boundary(inventory, "Inventory Domain") {
+}
 
-class CompleteAIAnalysis <<Command>>
-class AIAnalysisCompleted <<DomainEvent>>
+System_Boundary(staff, "Staff Domain") {
+}
 
-class CreateInvoice <<Command>>
-class InvoiceCreated <<DomainEvent>>
+System_Boundary(analytics, "Analytics Context") {
+}
 
-class ProcessPayment <<Command>>
-class PaymentReceived <<DomainEvent>>
+System_Boundary(integration, "Integration Context") {
+}
+
+System_Boundary(iam, "IAM Context") {
+}
+
+' ---------------------------
+' События (Event Flow)
+' ---------------------------
+
+' Customer → downstream
+
+customer --> (CustomerRegistered)
+(CustomerRegistered) --> medical
+(CustomerRegistered) --> iam
+(CustomerRegistered) --> analytics
+
+customer --> (CustomerUpdated)
+(CustomerUpdated) --> medical
+(CustomerUpdated) --> analytics
 
 
-RegisterCustomer --> CustomerRegistered
-CustomerRegistered --> CreatePatient
-CreatePatient --> PatientCreated
+' Medical core flow
 
-PatientCreated --> ScheduleAppointment
-ScheduleAppointment --> AppointmentScheduled
+medical --> (PatientCreated)
+(PatientCreated) --> analytics
 
-AppointmentScheduled --> CompleteAppointment
-CompleteAppointment --> AppointmentCompleted
+medical --> (AppointmentScheduled)
+(AppointmentScheduled) --> staff
+(AppointmentScheduled) --> analytics
 
-AppointmentCompleted --> RecordDiagnosis
-RecordDiagnosis --> DiagnosisRecorded
+medical --> (AppointmentCompleted)
+(AppointmentCompleted) --> billing
+(AppointmentCompleted) --> ai
+(AppointmentCompleted) --> analytics
 
-DiagnosisRecorded --> RequestImagingStudy
-RequestImagingStudy --> ImagingStudyRequested
+medical --> (AppointmentCancelled)
+(AppointmentCancelled) --> analytics
 
-ImagingStudyRequested --> CompleteImagingStudy
-CompleteImagingStudy --> ImagingStudyCompleted
 
-ImagingStudyCompleted --> RequestAIAnalysis
-RequestAIAnalysis --> AIAnalysisRequested
+' Diagnosis / Imaging / AI
 
-AIAnalysisRequested --> CompleteAIAnalysis
-CompleteAIAnalysis --> AIAnalysisCompleted
+medical --> (DiagnosisRecorded)
+(DiagnosisRecorded) --> ai
+(DiagnosisRecorded) --> analytics
 
-AppointmentCompleted --> CreateInvoice
-CreateInvoice --> InvoiceCreated
+medical --> (ImagingStudyRequested)
+(ImagingStudyRequested) --> ai
 
-InvoiceCreated --> ProcessPayment
-ProcessPayment --> PaymentReceived
+medical --> (ImagingStudyCompleted)
+(ImagingStudyCompleted) --> ai
+(ImagingStudyCompleted) --> analytics
+
+ai --> (AIAnalysisCompleted)
+(AIAnalysisCompleted) --> medical
+(AIAnalysisCompleted) --> analytics
+
+
+' Billing / Finance flow
+
+billing --> (InvoiceCreated)
+(InvoiceCreated) --> fintech
+(InvoiceCreated) --> analytics
+
+billing --> (PaymentReceived)
+(PaymentReceived) --> fintech
+(PaymentReceived) --> analytics
+
+fintech --> (TransactionPosted)
+(TransactionPosted) --> billing
+(TransactionPosted) --> analytics
+
+
+' Loans
+
+fintech --> (LoanApplicationSubmitted)
+(LoanApplicationSubmitted) --> analytics
+
+fintech --> (LoanApproved)
+(LoanApproved) --> analytics
+
+fintech --> (LoanDisbursed)
+(LoanDisbursed) --> analytics
+
+
+' Inventory
+
+inventory --> (InventoryItemUsed)
+(InventoryItemUsed) --> analytics
+
+inventory --> (InventoryLow)
+(InventoryLow) --> integration
+(InventoryLow) --> analytics
+
+
+' Staff
+
+staff --> (StaffAssigned)
+(StaffAssigned) --> analytics
 
 @enduml

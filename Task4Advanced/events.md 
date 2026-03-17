@@ -1,28 +1,381 @@
-# Каталог доменных событий
+# Каталог доменных событий (расширенная модель)
 
-В рамках событийной архитектуры каждое значимое изменение состояния системы публикуется как доменное событие.  
-События используются для интеграции доменов, построения аналитики и реактивной обработки данных.
+# Общие правила (применяются ко всем событиям)
 
-| Событие | Домен | Назначение | Основные поля |
-|--------|------|-------------|---------------|
-| CustomerRegistered | Customer | Регистрация нового клиента в системе | customerId, name, email, phone |
-| CustomerUpdated | Customer | Обновление данных клиента | customerId, updatedFields |
-| PatientCreated | Medical | Создание пациента на основе клиента | patientId, customerId, insuranceNumber |
-| AppointmentScheduled | Medical | Запланирован приём у врача | appointmentId, patientId, doctorId, scheduledTime |
-| AppointmentCompleted | Medical | Приём завершён | appointmentId, result |
-| DiagnosisRecorded | Medical | Зафиксирован диагноз | diagnosisId, patientId, diagnosisCode |
-| PrescriptionIssued | Medical | Выписано лекарственное назначение | prescriptionId, patientId, medication |
-| ImagingStudyRequested | Medical | Запрошено диагностическое исследование | studyId, patientId, studyType |
-| ImagingStudyCompleted | Medical | Исследование завершено | studyId, resultUri |
-| AIAnalysisRequested | AI Diagnostics | Исследование отправлено на анализ ИИ | analysisId, studyId, model |
-| AIAnalysisCompleted | AI Diagnostics | Получен результат анализа | analysisId, prediction, confidence |
-| InventoryItemUsed | Inventory | Использован медицинский расходный материал | itemId, quantity, appointmentId |
-| InventoryLow | Inventory | Запасы материала ниже допустимого уровня | itemId, currentLevel |
-| StaffAssigned | Staff | Назначен медицинский сотрудник | staffId, appointmentId |
-| AccountOpened | Fintech | Открыт банковский счёт клиента | accountId, customerId |
-| LoanApplicationSubmitted | Fintech | Подана заявка на кредит | loanId, customerId, amount |
-| LoanApproved | Fintech | Кредит одобрен | loanId, approvedAmount |
-| LoanDisbursed | Fintech | Кредит выдан клиенту | loanId, disbursedAmount |
-| TransactionPosted | Fintech | Проведена банковская операция | transactionId, accountId, amount |
-| InvoiceCreated | Billing | Выставлен счёт за медицинские услуги | invoiceId, patientId, amount |
-| PaymentReceived | Billing | Получена оплата | invoiceId, amount, paymentMethod |
+- Формат доставки: at-least-once (Kafka)
+- Поддержка retry: да
+- DLQ: да
+- Версионирование: version = v1 (backward compatible changes only)
+- Idempotency: обработка по business key
+- CorrelationId: используется для сквозной трассировки бизнес-операции
+
+---
+
+Event: CustomerRegistered
+Version: v1
+Producer: Customer Domain
+Consumers: Medical Domain, IAM Context, Analytics Context
+
+Payload:
+- customerId
+- name
+- email
+- phone
+
+Metadata:
+- eventId (UUID)
+- occurredAt (timestamp)
+- correlationId
+- idempotencyKey = customerId
+
+---
+
+Event: CustomerUpdated
+Version: v1
+Producer: Customer Domain
+Consumers: Medical Domain, Analytics Context
+
+Payload:
+- customerId
+- updatedFields
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = customerId
+
+---
+
+Event: PatientCreated
+Version: v1
+Producer: Medical Domain
+Consumers: Analytics Context
+
+Payload:
+- patientId
+- customerId
+- insuranceNumber
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = patientId
+
+---
+
+Event: AppointmentScheduled
+Version: v1
+Producer: Medical Domain
+Consumers: Staff Domain, Analytics Context
+
+Payload:
+- appointmentId
+- patientId
+- doctorId
+- scheduledTime
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = appointmentId
+
+---
+
+Event: AppointmentCompleted
+Version: v1
+Producer: Medical Domain
+Consumers: Billing Domain, AI Diagnostics Domain, Analytics Context
+
+Payload:
+- appointmentId
+- result
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = appointmentId
+
+---
+
+Event: AppointmentCancelled
+Version: v1
+Producer: Medical Domain
+Consumers: Analytics Context
+
+Payload:
+- appointmentId
+- reason
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = appointmentId
+
+---
+
+Event: DiagnosisRecorded
+Version: v1
+Producer: Medical Domain
+Consumers: AI Diagnostics Domain, Analytics Context
+
+Payload:
+- diagnosisId
+- patientId
+- diagnosisCode
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = diagnosisId
+
+---
+
+Event: ImagingStudyRequested
+Version: v1
+Producer: Medical Domain
+Consumers: AI Diagnostics Domain
+
+Payload:
+- studyId
+- patientId
+- studyType
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = studyId
+
+---
+
+Event: ImagingStudyCompleted
+Version: v1
+Producer: Medical Domain
+Consumers: AI Diagnostics Domain, Analytics Context
+
+Payload:
+- studyId
+- resultUri
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = studyId
+
+---
+
+Event: AIAnalysisRequested
+Version: v1
+Producer: AI Diagnostics Domain
+Consumers: -
+
+Payload:
+- analysisId
+- studyId
+- model
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = analysisId
+
+---
+
+Event: AIAnalysisCompleted
+Version: v1
+Producer: AI Diagnostics Domain
+Consumers: Medical Domain, Analytics Context
+
+Payload:
+- analysisId
+- prediction
+- confidence
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = analysisId
+
+---
+
+Event: InventoryItemUsed
+Version: v1
+Producer: Inventory Domain
+Consumers: Analytics Context
+
+Payload:
+- itemId
+- quantity
+- appointmentId
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = itemId
+
+---
+
+Event: InventoryLow
+Version: v1
+Producer: Inventory Domain
+Consumers: Integration Context, Analytics Context
+
+Payload:
+- itemId
+- currentLevel
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = itemId
+
+---
+
+Event: StaffAssigned
+Version: v1
+Producer: Staff Domain
+Consumers: Analytics Context
+
+Payload:
+- staffId
+- appointmentId
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = staffId
+
+---
+
+Event: AccountOpened
+Version: v1
+Producer: Fintech Domain
+Consumers: Analytics Context
+
+Payload:
+- accountId
+- customerId
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = accountId
+
+---
+
+Event: LoanApplicationSubmitted
+Version: v1
+Producer: Fintech Domain
+Consumers: Analytics Context
+
+Payload:
+- loanId
+- customerId
+- amount
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = loanId
+
+---
+
+Event: LoanApproved
+Version: v1
+Producer: Fintech Domain
+Consumers: Analytics Context
+
+Payload:
+- loanId
+- approvedAmount
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = loanId
+
+---
+
+Event: LoanDisbursed
+Version: v1
+Producer: Fintech Domain
+Consumers: Analytics Context
+
+Payload:
+- loanId
+- disbursedAmount
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = loanId
+
+---
+
+Event: TransactionPosted
+Version: v1
+Producer: Fintech Domain
+Consumers: Billing Domain, Analytics Context
+
+Payload:
+- transactionId
+- accountId
+- amount
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = transactionId
+
+---
+
+Event: InvoiceCreated
+Version: v1
+Producer: Billing Domain
+Consumers: Fintech Domain, Analytics Context
+
+Payload:
+- invoiceId
+- patientId
+- amount
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = invoiceId
+
+---
+
+Event: PaymentReceived
+Version: v1
+Producer: Billing Domain
+Consumers: Fintech Domain, Analytics Context
+
+Payload:
+- invoiceId
+- amount
+- paymentMethod
+
+Metadata:
+- eventId
+- occurredAt
+- correlationId
+- idempotencyKey = invoiceId

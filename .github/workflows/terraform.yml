@@ -6,6 +6,7 @@ on:
       - main
       - homework
   pull_request:
+  workflow_dispatch:
 
 jobs:
   terraform:
@@ -31,21 +32,22 @@ jobs:
         working-directory: Task2Advanced/terraform
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         run: terraform init
+
+      - name: Show Backend Info
+        run: terraform providers
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -out=tfplan
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve
+      - name: Terraform Apply (manual only)
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -auto-approve tfplan
