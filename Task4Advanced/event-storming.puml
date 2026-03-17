@@ -4,7 +4,7 @@
 title Event Storming – Future 2.0 (Producer / Consumer Model)
 
 ' ---------------------------
-' Контексты
+'  Контексты
 ' ---------------------------
 
 System_Boundary(customer, "Customer Domain") {

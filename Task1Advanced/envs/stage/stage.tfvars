@@ -1,20 +1,27 @@
-name = "vm-stage-01"
-zone = "ru-central1-b"
-platform_id = "standard-v3"
+token     = "your-token"
+cloud_id  = "your-cloud-id"
+folder_id = "your-folder-id"
 
-cores = 4
-memory = 8
+zone = "ru-central1-b"
+
+name        = "vm-stage"
+platform_id = "standard-v2"
+
+cores  = 4
+memory = 4
 
 boot_disk_size = 40
-boot_disk_type = "network-ssd"
+boot_disk_type = "network-hdd"
 
-data_disk_size = 100
-data_disk_type = "network-ssd"
+data_disk_size = 50
+data_disk_type = "network-hdd"
 
-subnet_id = "subnet-stage"
-image_id = "image-stage"
-
-ssh_public_key = "ssh_public_key"
-
+subnet_id  = "your-subnet-id"
 enable_nat = true
-labels = { env = "stage" }
+
+ssh_public_key = "ssh-rsa AAAA..."
+
+labels = {
+  env     = "stage"
+  project = "future20"
+}

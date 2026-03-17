@@ -1,11 +1,3 @@
-provider "yandex" {
-  token     = "token"
-  cloud_id  = "cloud_id"
-  folder_id = "folder_id"
-  zone      = "zone"
-}
-
-
 terraform {
   required_providers {
     yandex = {
@@ -15,41 +7,38 @@ terraform {
   }
 }
 
-resource "yandex_compute_disk" "data" {
-  name = "${var.name}-data"
-  type = var.data_disk_type
-  size = var.data_disk_size
-  zone = var.zone
+provider "yandex" {
+  token     = var.token
+  cloud_id  = var.cloud_id
+  folder_id = var.folder_id
+  zone      = var.zone
 }
 
-resource "yandex_compute_instance" "vm" {
+data "yandex_compute_image" "ubuntu" {
+  family = "ubuntu-2204-lts"
+}
+
+module "vm" {
+  source = "../../modules/vm"
+
   name        = var.name
   platform_id = var.platform_id
   zone        = var.zone
 
-  resources {
-    cores  = var.cores
-    memory = var.memory
-  }
+  cores  = var.cores
+  memory = var.memory
 
-  boot_disk {
-    initialize_params {
-      image_id = var.image_id
-      size     = var.boot_disk_size
-      type     = var.boot_disk_type
-    }
-  }
+  image_id = data.yandex_compute_image.ubuntu.id
 
-  network_interface {
-    subnet_id = var.subnet_id
-    nat       = var.enable_nat
-  }
+  boot_disk_size = var.boot_disk_size
+  boot_disk_type = var.boot_disk_type
 
-  secondary_disk {
-    disk_id = yandex_compute_disk.data.id
-  }
+  data_disk_size = var.data_disk_size
+  data_disk_type = var.data_disk_type
 
-  metadata = {
-    ssh-keys = "ubuntu:${var.ssh_public_key}"
-  }
+  subnet_id  = var.subnet_id
+  enable_nat = var.enable_nat
+
+  ssh_public_key = var.ssh_public_key
+  labels         = var.labels
 }
